@@ -16,7 +16,7 @@ root_dir = Path(__file__).parent.parent
 pdf_path = root_dir / os.getenv("PDF_NAME")
 print(f"Carregando PDF do caminho: {pdf_path}")
 document = PyPDFLoader(str(pdf_path)).load()
-splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200).split_documents(document)
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150).split_documents(document)
 if not splitter:
     print("Nenhum documento foi gerado após a divisão. Verifique o processo de divisão.")
 else:
@@ -31,5 +31,17 @@ else:
     print(f"{len(embeddings)} embeddings foram geradas.")
 
 
+# Verificação do processo de armazenamento no PGVector
+storage = PGVector(
+    collection_name=os.getenv("PG_VECTOR_COLLECTION_NAME"),
+    connection=os.getenv("DATABASE_URL"),
+    embeddings=embedding_model,
+    use_jsonb=True
+)
 
+storage.add_embeddings(
+    texts=[doc.page_content for doc in splitter],
+    embeddings=embeddings,
+    metadatas=[doc.metadata for doc in splitter]
+)
 
